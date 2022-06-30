@@ -63,7 +63,7 @@ const btnSimular: HTMLButtonElement = document.getElementById(
 //-----------------------Definición de los objetos que realizan la simulación de colas.
 let simulador: Simulador;
 let matrizEstado: any[][];
-let cantMaxPasajeros: number;
+let cantMaxPacientes: number;
 
 //-----------------------Definición de los parámetros.
 let n: number;
@@ -117,11 +117,11 @@ const simular = () => {
   );
 
   matrizEstado = simulador.getMatrizEstado();
-  cantMaxPasajeros = simulador.getCantMaxPasajerosEnSistema();
+  cantMaxPacientes = simulador.getCantMaxPacientesEnSistema();
 
   //Cargamos la tabla a mostrar.
-  HTMLUtils.completarEncabezadosPasajeros(
-    cantMaxPasajeros,
+  HTMLUtils.completarEncabezadosPacientes(
+    cantMaxPacientes,
     tablaSimulacion,
     colPacientes
   );

@@ -17,7 +17,7 @@ export module HTMLUtils {
   ) {
     for (let i: number = tabla.rows.length; i > 2; i--) tabla.deleteRow(i - 1);
 
-    // Limpiamos los encabezados correspondientes a los pasajeros.
+    // Limpiamos los encabezados correspondientes a los pacientes.
     for (let i: number = tabla.rows[0].cells.length; i > cantEncabezados; i--)
       tabla.rows[0].deleteCell(i - 1);
 
@@ -29,16 +29,16 @@ export module HTMLUtils {
       tabla.rows[1].deleteCell(i - 1);
   }
 
-  // Completa los encabezados de la tabla con los datos de los pasajeros.
-  export function completarEncabezadosPasajeros(
-    cantPasajeros: number,
+  // Completa los encabezados de la tabla con los datos de los pacientes.
+  export function completarEncabezadosPacientes(
+    cantPacientes: number,
     tabla: HTMLTableElement,
     columnas: string[]
   ): void {
     let encabezados: HTMLTableRowElement = tabla.rows[0];
     let subEncabezados: HTMLTableRowElement = tabla.rows[1];
 
-    for (let i: number = 0; i < cantPasajeros; i++) {
+    for (let i: number = 0; i < cantPacientes; i++) {
       let col: HTMLTableHeaderCellElement = encabezados.insertCell();
       col.colSpan = columnas.length;
       col.style.fontWeight = 'bold';

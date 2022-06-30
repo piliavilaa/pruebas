@@ -18,7 +18,7 @@ export class Simulador {
   public aTiempoPago: number;
   public bTiempoPago: number;
   public matrizEstado: string[][];
-  public cantMaxPasajeros: number;
+  public cantMaxPacientes: number;
   public probTiposPacientes: number[];
   public tiposPacientes: string[];
 
@@ -117,7 +117,7 @@ export class Simulador {
     let totalPacientesComun: number = 0;
     let acuDineroAtencion: number = 0;
     let totalPacientes: number = 0;
-    this.cantMaxPasajeros = 0;
+    this.cantMaxPacientes = 0;
 
     for (let i: number = 0; i < cantEventos; i++) {
       evento = [];
@@ -142,7 +142,7 @@ export class Simulador {
         reloj = Utils.getMenorMayorACero(eventosCandidatos);
         tipoEvento = this.getSiguienteEvento(eventosCandidatos);
       }
-      console.log(tipoEvento);
+
       switch (tipoEvento) {
         case Evento.INICIO_SIMULACION: {
           rndLlegada = Math.random();
@@ -159,7 +159,7 @@ export class Simulador {
           proximaLlegada = reloj + tiempoEntreLlegadas;
           totalPacientes++;
 
-          // Creamos el objeto pasajero.
+          // Creamos el objeto paciente.
           let tipo: string = 'Indefinido';
           let paciente: Paciente = new Paciente(totalPacientes, tipo);
           //console.log(paciente.getId());
@@ -186,11 +186,11 @@ export class Simulador {
           finDeterminacion = -1;
           console.log('ocurrio en det');
           //--------PARA EL PACIENTE QUE ESTABA SIENDO DETERMINADO
-          // Buscamos el pasajero determinado y le asignamos el tipo.
+          // Buscamos el paciente determinado y le asignamos el tipo.
           //console.log(EstadoPaciente.ESPERANDO_PAGO);
           let pacienteAtendido: Paciente = pacientesEnSistema.find(
-            (pacienteAtendido) =>
-              pacienteAtendido.getEstado() == EstadoPaciente.SIENDO_DETERMINADO
+            (paciente) =>
+              paciente.getEstado() == EstadoPaciente.SIENDO_DETERMINADO
           );
           rndTipoPaciente = Math.random();
           tipoPaciente = this.getTipoPaciente(rndTipoPaciente);
@@ -239,19 +239,18 @@ export class Simulador {
           console.log('ocurrio en autor');
           //--------PARA EL PACIENTE QUE ESTABA ESPERANDO_AUTORIZACION
           // Buscamos el paciente atendido y le asignamos el tipo.
-          let pacienteAtendido: Paciente = pacientesEnSistema.find(
-            (pacienteAtendido) =>
-              pacienteAtendido.getEstado() ==
-              EstadoPaciente.ESPERANDO_AUTORIZACION
+          let pacienteAutorizado: Paciente = pacientesEnSistema.find(
+            (paciente) =>
+              paciente.getEstado() == EstadoPaciente.ESPERANDO_AUTORIZACION
           );
           console.log('tipo del paciente');
-          console.log(pacienteAtendido.getTipoPaciente());
+          console.log(pacienteAutorizado.getTipoPaciente());
 
           //paciente comun
-          if (pacienteAtendido.getTipoPaciente() == 'Comun') {
+          if (pacienteAutorizado.getTipoPaciente() == 'Comun') {
             //medico 1 libre
             if (medico1.estaLibre()) {
-              pacienteAtendido.siendoAtendido1();
+              pacienteAutorizado.siendoAtendido1();
               medico1.atendiendoComun();
               rndAntencion = Math.random();
               tiempoAtencion = this.getTiempoAtencion(rndAntencion);
@@ -259,80 +258,41 @@ export class Simulador {
             } else {
               if (medico2.estaLibre()) {
                 //medico 2 libre y el uno no esta libre
-                pacienteAtendido.siendoAtendido2();
+                pacienteAutorizado.siendoAtendido2();
                 medico2.atendiendoComun();
                 rndAntencion = Math.random();
                 tiempoAtencion = this.getTiempoAtencion(rndAntencion);
                 finAtencion2 = reloj + tiempoAtencion;
               } else {
                 //el medico 1 y el medico 2 estan ocupados
-                colaMedicosComun.push(pacienteAtendido);
-                pacienteAtendido.esperandoAtencion();
+                colaMedicosComun.push(pacienteAutorizado);
+                pacienteAutorizado.esperandoAtencion();
               }
             }
           }
           //paciente urgente
           else {
             if (medico1.estaLibre()) {
-              //medico 1 esta libre
-              pacienteAtendido.siendoAtendido1();
+              pacienteAutorizado.siendoAtendido1();
               medico1.atendiendoUrgencia();
               rndAntencion = Math.random();
               tiempoAtencion = this.getTiempoAtencion(rndAntencion);
               finAtencion1 = reloj + tiempoAtencion;
             } else {
-              //el medico 1 no esta libre, pero el 2 si
               if (medico2.estaLibre()) {
-                pacienteAtendido.siendoAtendido2();
+                pacienteAutorizado.siendoAtendido2();
                 medico2.atendiendoUrgencia();
                 rndAntencion = Math.random();
                 tiempoAtencion = this.getTiempoAtencion(rndAntencion);
                 finAtencion2 = reloj + tiempoAtencion;
-              }
-              //ningun medico esta libre
-              else {
-                //el medico 1 esta atendiendo a un comun
-                if (medico1.getEstado() == EstadoMedico.ATENDIENDO_COMUN) {
-                  let pacienteInterrumpido: Paciente = pacientesEnSistema.find(
-                    (pacienteInterrumpido) =>
-                      pacienteInterrumpido.getEstado() ==
-                      EstadoPaciente.SIENDO_ATENDIDO1
-                  );
-                  pacienteInterrumpido.enInterrupcion1();
-                  tiempoRemanencia1 = finAtencion1 - reloj;
-                  pacienteAtendido.siendoAtendido1();
-                  medico1.atendiendoUrgencia();
-                  rndAntencion = Math.random();
-                  tiempoAtencion = this.getTiempoAtencion(rndAntencion);
-                  finAtencion1 = reloj + tiempoAtencion;
-                }
-                //medico 1 atendiendo urgencia medico 2 ocupado
-                else {
-                  //medico 2 con un comun
-                  if (medico2.getEstado() == EstadoMedico.ATENDIENDO_COMUN) {
-                    let pacienteInterrumpido: Paciente =
-                      pacientesEnSistema.find(
-                        (pacienteInterrumpido) =>
-                          pacienteInterrumpido.getEstado() ==
-                          EstadoPaciente.SIENDO_ATENDIDO2
-                      );
-                    pacienteInterrumpido.enInterrupcion2();
-                    tiempoRemanencia2 = finAtencion2 - reloj;
-                    pacienteAtendido.siendoAtendido2();
-                    medico2.atendiendoUrgencia();
-                    rndAntencion = Math.random();
-                    tiempoAtencion = this.getTiempoAtencion(rndAntencion);
-                    finAtencion2 = reloj + tiempoAtencion;
-                  }
-                  //el medico 2 esta con una urgencia al igual que el 1
-                  else {
-                    colaMedicosUrgencia.push(pacienteAtendido);
-                    pacienteAtendido.esperandoAtencion;
-                  }
-                }
+              } else {
+                //el medico 1 y el medico 2 estan ocupados
+                colaMedicosUrgencia.push(pacienteAutorizado);
+                pacienteAutorizado.esperandoAtencion();
               }
             }
           }
+
           //--------PARA EL PACIENTE QUE ENTRA A LA AUTORIZACION
           if (colaObraSocial.length === 0) {
             obra.libre();
@@ -350,10 +310,9 @@ export class Simulador {
           finAtencion1 = -1;
           console.log('ocurrio en atencion1');
           //PARA EL PACIENTE QUE SE VA DE LA ATENCION
-          console.log('hola');
           let pacienteAtendido: Paciente = pacientesEnSistema.find(
-            (pacienteAtendido) =>
-              pacienteAtendido.getEstado() == EstadoPaciente.SIENDO_ATENDIDO1
+            (paciente) =>
+              paciente.getEstado() == EstadoPaciente.SIENDO_ATENDIDO1
           );
           //vemos si el enfermero esta ocupado
           console.log(medico1.getEstado());
@@ -372,47 +331,17 @@ export class Simulador {
           //PARA EL PACIENTE QUE SALE DE LA COLA DE ATENCION
           //no hay nadie en la cola de urgentes
           if (colaMedicosUrgencia.length === 0) {
-            if (tiempoRemanencia1 > 0 || tiempoRemanencia2 > 0) {
-              if (tiempoRemanencia1 > 0) {
-                let pacienteInterrumpido: Paciente = pacientesEnSistema.find(
-                  (pacienteInterrumpido) =>
-                    pacienteInterrumpido.getEstado() ==
-                    EstadoPaciente.INTERRUMPIDO1
-                );
-                pacienteInterrumpido.siendoAtendido1();
-                medico1.atendiendoComun();
-                finAtencion1 = reloj + tiempoRemanencia1;
-                tiempoRemanencia1 = 0;
-              } else {
-                if (tiempoRemanencia2 > 0) {
-                  let pacienteInterrumpido: Paciente = pacientesEnSistema.find(
-                    (pacienteInterrumpido) =>
-                      pacienteInterrumpido.getEstado() ==
-                      EstadoPaciente.INTERRUMPIDO2
-                  );
-                  pacienteInterrumpido.siendoAtendido1();
-                  medico1.atendiendoComun();
-                  finAtencion1 = reloj + tiempoRemanencia2;
-                  tiempoRemanencia2 = 0;
-                }
-              }
+            if (colaMedicosComun.length === 0) {
+              medico1.libre();
+            } else {
+              let pacienteIngresa: Paciente = colaMedicosComun.shift();
+              pacienteIngresa.siendoAtendido1();
+              medico1.atendiendoComun();
+              rndAntencion = Math.random();
+              tiempoAtencion = this.getTiempoAtencion(rndAntencion);
+              finAtencion1 = reloj + tiempoAtencion;
             }
-            //no hay tiempos de remanencias, es decir no hay interrumpidos
-            else {
-              if (colaMedicosComun.length === 0) {
-                medico1.libre();
-              } else {
-                let pacienteIngresa: Paciente = colaMedicosComun.shift();
-                pacienteIngresa.siendoAtendido1();
-                medico1.atendiendoComun();
-                rndAntencion = Math.random();
-                tiempoAtencion = this.getTiempoAtencion(rndAntencion);
-                finAtencion1 = reloj + tiempoAtencion;
-              }
-            }
-          }
-          //hay alguien en la cola de urgentes
-          else {
+          } else {
             let pacienteIngresa: Paciente = colaMedicosUrgencia.shift();
             pacienteIngresa.siendoAtendido1();
             medico1.atendiendoUrgencia();
@@ -449,48 +378,17 @@ export class Simulador {
           //PARA EL PACIENTE QUE SALE DE LA COLA DE ATENCION
           //no hay nadie en la cola de urgentes
           if (colaMedicosUrgencia.length === 0) {
-            //hay pacientes interrumpidos comunes
-            if (tiempoRemanencia1 > 0 || tiempoRemanencia2 > 0) {
-              if (tiempoRemanencia1 > 0) {
-                let pacienteInterrumpido: Paciente = pacientesEnSistema.find(
-                  (pacienteInterrumpido) =>
-                    pacienteInterrumpido.getEstado() ==
-                    EstadoPaciente.INTERRUMPIDO1
-                );
-                pacienteInterrumpido.siendoAtendido2();
-                medico2.atendiendoComun();
-                finAtencion2 = reloj + tiempoRemanencia1;
-                tiempoRemanencia1 = 0;
-              } else {
-                if (tiempoRemanencia2 > 0) {
-                  let pacienteInterrumpido: Paciente = pacientesEnSistema.find(
-                    (pacienteInterrumpido) =>
-                      pacienteInterrumpido.getEstado() ==
-                      EstadoPaciente.INTERRUMPIDO2
-                  );
-                  pacienteInterrumpido.siendoAtendido2();
-                  medico2.atendiendoComun();
-                  finAtencion2 = reloj + tiempoRemanencia2;
-                  tiempoRemanencia2 = 0;
-                }
-              }
+            if (colaMedicosComun.length === 0) {
+              medico2.libre();
+            } else {
+              let pacienteIngresa: Paciente = colaMedicosComun.shift();
+              pacienteIngresa.siendoAtendido2();
+              medico2.atendiendoComun();
+              rndAntencion = Math.random();
+              tiempoAtencion = this.getTiempoAtencion(rndAntencion);
+              finAtencion2 = reloj + tiempoAtencion;
             }
-            //no hay pacientes interrumpidos comunes
-            else {
-              if (colaMedicosComun.length === 0) {
-                medico2.libre();
-              } else {
-                let pacienteIngresa: Paciente = colaMedicosComun.shift();
-                pacienteIngresa.siendoAtendido2();
-                medico2.atendiendoComun();
-                rndAntencion = Math.random();
-                tiempoAtencion = this.getTiempoAtencion(rndAntencion);
-                finAtencion2 = reloj + tiempoAtencion;
-              }
-            }
-          }
-          //hay alguien en la cola de urgentes
-          else {
+          } else {
             let pacienteIngresa: Paciente = colaMedicosUrgencia.shift();
             pacienteIngresa.siendoAtendido2();
             medico2.atendiendoUrgencia();
@@ -498,6 +396,7 @@ export class Simulador {
             tiempoAtencion = this.getTiempoAtencion(rndAntencion);
             finAtencion2 = reloj + tiempoAtencion;
           }
+
           break;
         }
 
@@ -537,6 +436,12 @@ export class Simulador {
               finDeterminacion = reloj + tiempoDeterminacion;
             }
           }
+          //eliminamos al paciente que se fue
+          let indicePaciente: number = pacientesEnSistema.findIndex(
+            (paciente) => paciente.getEstado() === EstadoPaciente.FINALIZADO
+          );
+          pacientesEnSistema.splice(indicePaciente, 1);
+
           break;
         }
 
@@ -611,13 +516,9 @@ export class Simulador {
 
         this.matrizEstado.push(evento);
 
-        //Actualizamos la cantidad de pasajeros máximos que hubo en el sistema.
-        if (pacientesEnSistema.length > this.cantMaxPasajeros)
-          this.cantMaxPasajeros = pacientesEnSistema.length;
-
-        console.log(evento);
-
-
+        //Actualizamos la cantidad de pacientes máximos que hubo en el sistema.
+        if (pacientesEnSistema.length > this.cantMaxPacientes)
+          this.cantMaxPacientes = pacientesEnSistema.length;
       }
 
       // Reseteamos algunas variables.
@@ -642,8 +543,8 @@ export class Simulador {
     return this.matrizEstado;
   }
 
-  public getCantMaxPasajerosEnSistema(): number {
-    return this.cantMaxPasajeros;
+  public getCantMaxPacientesEnSistema(): number {
+    return this.cantMaxPacientes;
   }
 
   public getDistribucionExponencial(rnd: number, media: number): number {
